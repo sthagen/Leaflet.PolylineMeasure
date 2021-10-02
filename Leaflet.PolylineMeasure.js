@@ -1,7 +1,7 @@
 /*********************************************************
 **                                                      **
 **       Leaflet Plugin "Leaflet.PolylineMeasure"       **
-**       Version: 2019-11-15                            **
+**       Version: 2021-09-28                            **
 **                                                      **
 *********************************************************/
 
@@ -41,11 +41,11 @@
              */
             position: 'topleft',
             /**
-             * Which units the distances are displayed in. Possible values are: 'metres', 'landmiles', 'nauticalmiles'
+             * Which units the distances are displayed in. Possible values are: 'kilometres', 'landmiles', 'nauticalmiles'
              * @type {String}
              * @default
              */
-            unit: 'metres',
+            unit: 'kilometres',
             /**
              * Clear the measurements on stop
              * @type {Boolean}
@@ -136,11 +136,11 @@
              */
             showUnitControl: false,
             /**
-             * Keep same unit in tooltips in case of distance less then 1 km/mi/nm
+             * Use subunits (metres/feet) in tooltips in case of distances less then 1 kilometre/landmile
              * @type {Boolean}
              * @default
              */
-            distanceShowSameUnit: false,
+            useSubunits: true,
             /**
              * Title texts to show on the Unit Control button
              * @type {Object}
@@ -148,7 +148,7 @@
              */
             unitControlTitle: {
                text: 'Change Units',
-               metres: 'metres',
+               kilometres: 'kilometres',
                landmiles: 'land miles',
                nauticalmiles: 'nautical miles'
             },
@@ -164,6 +164,13 @@
                landmiles: 'mi',
                nauticalmiles: 'nm'
             },
+            /**
+             * Classes to apply to the Unit control
+             * @type {Array}
+             * @default
+             */
+            unitControlClasses: [],
+
             /**
              * Styling settings for the temporary dashed rubberline
              * @type {Object}
@@ -410,9 +417,9 @@
                 this._clearMeasureControl.classList.add('polyline-measure-clearControl')
             }
             if (this.options.showUnitControl) {
-                if (this.options.unit == "metres") {
-                    var label = this.options.unitControlLabel.metres;
-                    var title = this.options.unitControlTitle.text + " [" + this.options.unitControlTitle.metres  + "]";
+                if (this.options.unit == "kilometres") {
+                    var label = this.options.unitControlLabel.kilometres;
+                    var title = this.options.unitControlTitle.text + " [" + this.options.unitControlTitle.kilometres  + "]";
                 }  else if  (this.options.unit == "landmiles") {
                     var label = this.options.unitControlLabel.landmiles;
                     var title = this.options.unitControlTitle.text + " [" + this.options.unitControlTitle.landmiles  + "]";
@@ -420,7 +427,7 @@
                     var label = this.options.unitControlLabel.nauticalmiles;
                     var title = this.options.unitControlTitle.text + " [" + this.options.unitControlTitle.nauticalmiles  + "]";
                 }
-                var classes = [];
+                var classes = this.options.unitControlClasses;
                 this._unitControl = this._createControl (label, title, classes, this._container, this._changeUnit, this);
                 this._unitControl.setAttribute ('id', 'unitControlId');
             }
@@ -519,7 +526,7 @@
         },
 
         _changeUnit: function() {
-            if (this.options.unit == "metres") {
+            if (this.options.unit == "kilometres") {
                 this.options.unit = "landmiles";
                 document.getElementById("unitControlId").innerHTML = this.options.unitControlLabel.landmiles;
                 this._unitControl.title = this.options.unitControlTitle.text +" [" + this.options.unitControlTitle.landmiles  + "]";
@@ -528,9 +535,9 @@
                 document.getElementById("unitControlId").innerHTML = this.options.unitControlLabel.nauticalmiles;
                 this._unitControl.title = this.options.unitControlTitle.text +" [" + this.options.unitControlTitle.nauticalmiles  + "]";
             } else {
-                this.options.unit = "metres";
-                document.getElementById("unitControlId").innerHTML = this.options.unitControlLabel.metres;
-                this._unitControl.title = this.options.unitControlTitle.text +" [" + this.options.unitControlTitle.metres  + "]";
+                this.options.unit = "kilometres";
+                document.getElementById("unitControlId").innerHTML = this.options.unitControlLabel.kilometres;
+                this._unitControl.title = this.options.unitControlTitle.text +" [" + this.options.unitControlTitle.kilometres  + "]";
             }
 
             if (this._currentLine) {
@@ -614,12 +621,7 @@
                 } else if (dist >= 1852) {
                     dist = (dist/1852).toFixed(2);
                 } else  {
-                    if (this.options.distanceShowSameUnit) {
-                        dist = (dist/1852).toFixed(3);
-                    } else {
-                        dist = (dist/0.3048).toFixed(0);
-                        unit = this.options.unitControlLabel.feet;
-                    }
+                    dist = (dist/1852).toFixed(3);   // there's no subunit of Nautical Miles for horizontal length measurements. "Cable length" (1/10th of 1 nm) is rarely used 
                 }
             } else if (this.options.unit === 'landmiles') {
                 unit = this.options.unitControlLabel.landmiles;
@@ -630,7 +632,7 @@
                 } else if (dist >= 1609.344) {
                     dist = (dist/1609.344).toFixed(2);
                 } else {
-                    if (this.options.distanceShowSameUnit) {
+                    if (!this.options.useSubunits) {
                         dist = (dist/1609.344).toFixed(3);
                     } else {
                         dist = (dist/0.3048).toFixed(0);
@@ -647,7 +649,7 @@
                 } else if (dist >= 1000) {
                     dist = (dist/1000).toFixed(2);
                 } else {
-                    if (this.options.distanceShowSameUnit) {
+                    if (!this.options.useSubunits) {
                         dist = (dist/1000).toFixed(3);
                     } else {
                         dist = (dist).toFixed(0);
